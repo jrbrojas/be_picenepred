@@ -37,14 +37,11 @@ class AuthController extends Controller
             'activo'    => 1, // por defecto activo
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
         return response()->json([
             'message' => 'Usuario registrado correctamente',
             'user'    => $user,
             'rol'     => $user->rol,
             'activo'  => $user->activo,
-            'token'   => $token,
         ], 201);
     }
 
@@ -65,7 +62,6 @@ class AuthController extends Controller
         return response()->json([
             'status'       => 'success',
             'user'         => $user,
-            'rol'         => $user->rol,
             'estado'         => $user->activo,
             'token' => $token,
         ], 200);
@@ -89,9 +85,34 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        auth('api')->logout(true);
+        // $request->user()->tokens()->delete();
 
         return response()->json(['message' => 'Sesión cerrada correctamente']);
+    }
+
+    public function refresh(): JsonResponse
+    {
+        $newToken = auth('api')->refresh();
+        return $this->respondWithToken($newToken);
+    }
+
+    /**
+     * Helper de respuesta estándar de JWT
+     */
+    protected function respondWithToken(string $token, ?User $user = null): JsonResponse
+    {
+        $u = $user ?? auth('api')->user();
+
+        return response()->json([
+            'status'       => 'success',
+            'user'         => $u,
+            'rol'          => $u?->rol,
+            'estado'       => $u?->activo,
+            'access_token' => $token,
+            'token_type'   => 'bearer',
+            'expires_in'   => auth('api')->factory()->getTTL() * 60, // segundos
+        ], 200);
     }
 }
 
