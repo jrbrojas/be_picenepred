@@ -23,6 +23,14 @@ El proyecto se puede construir con las migraciones de Laravel, por lo que es
 independiente del motor de base de datos que se esté utilzando. Como primer
 comando se debe ejecutar:
 
+Si lo levantas por primera vez:
+
+
+```bash
+$ php artisan migrate --seed
+```
+
+
 ```bash
 $ php artisan migrate:fresh --seed
 ```

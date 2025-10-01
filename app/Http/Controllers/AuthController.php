@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 
 class AuthController extends Controller
 {
+
     /**
      * Registro de usuario
      */
@@ -48,33 +51,24 @@ class AuthController extends Controller
     /**
      * Login de usuario
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required|string',
-        ]);
-
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Credenciales incorrectas'], 401);
-        }
-
-        $user = User::where('email', $request->email)->firstOrFail();
+        $token = $request->authenticate();
+        $user = auth('api')->user();
 
         // Verificar si el usuario está activo
         if (!$user->activo) {
             return response()->json(['message' => 'Usuario inactivo'], 403);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
+        // $token = $user->createToken('auth_token')->plainTextToken;
         return response()->json([
-            'message' => 'Login exitoso',
-            'user'    => $user,
-            'rol'     => $user->rol,
-            'activo'  => $user->activo,
-            'token'   => $token,
-        ]);
+            'status'       => 'success',
+            'user'         => $user,
+            'rol'         => $user->rol,
+            'estado'         => $user->activo,
+            'token' => $token,
+        ], 200);
     }
 
     /**
@@ -82,10 +76,11 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
+        $user = auth('api')->user();
         return response()->json([
-            'user'   => $request->user(),
-            'rol'    => $request->user()->rol,
-            'activo' => $request->user()->activo,
+            'user'   => $user,
+            'rol'    => $user->rol,
+            'activo' => $user->activo,
         ]);
     }
 
