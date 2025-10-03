@@ -23,9 +23,8 @@ $app = Application::configure(basePath: $basePath)
         //
     });
 
-// Cargar el .env interno
-if (file_exists($basePath.'/.env')) {
-    Dotenv::createImmutable($basePath)->safeLoad();
-}
+    if (file_exists($basePath.'/.env')) {
+        Dotenv::createMutable($basePath)->load();
+    }
 
 return $app->create();
