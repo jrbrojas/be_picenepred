@@ -17,25 +17,18 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'nombres'   => 'required|string|max:100',
             'apellidos' => 'required|string|max:150',
             'usuario'   => 'required|string|max:50|unique:users',
             'email'     => 'required|string|email|unique:users',
             'password'  => 'required|string|min:6',
+            'fuente'  => 'required|string|min:2',
             'rol'       => 'required|in:ADMIN,USER',
         ]);
+        $data['activo'] = true;
 
-        $user = User::create([
-            'nombres'   => $request->nombres,
-            'apellidos' => $request->apellidos,
-            'usuario'   => $request->usuario,
-            'email'     => $request->email,
-            'password'  => Hash::make($request->password),
-            'rol'       => $request->rol,
-            'fuente'    => $request->fuente,
-            'activo'    => 1, // por defecto activo
-        ]);
+        $user = User::create($data);
 
         return response()->json([
             'message' => 'Usuario registrado correctamente',
@@ -88,7 +81,7 @@ class AuthController extends Controller
         auth('api')->logout(true);
         // $request->user()->tokens()->delete();
 
-        return response()->json(['message' => 'Sesión cerrada correctamente']);
+        return response()->json(['message' => 'Sesion cerrada correctamente']);
     }
 
     public function refresh(): JsonResponse
