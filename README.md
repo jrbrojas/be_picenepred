@@ -8,8 +8,21 @@ $ composer install
 
 ### 2. Copiar archivo de entorno
 
+Ambiente de desarrollo
+
 ```bash
-$ cp .env.example .env
+$ cp .env.dev .env
+```
+Ambiente de calidad
+
+```bash
+$ cp .env.qa .env
+```
+
+Ambiente de produccion
+
+```bash
+$ cp .env.prod .env
 ```
 
 ### 3. Copiar archivo de entorno
@@ -25,11 +38,11 @@ comando se debe ejecutar:
 
 Si lo levantas por primera vez:
 
-
 ```bash
 $ php artisan migrate --seed
 ```
 
+Si lo levantas posterior:
 
 ```bash
 $ php artisan migrate:fresh --seed
@@ -40,4 +53,9 @@ Para probar el servidor, debe ejecutar:
 
 ```bash
 $ php artisan serve
+```
+si es con un puerto como el 8003, ejecutas el siguiente comando
+
+```bash
+php artisan serve --port=8003
 ```

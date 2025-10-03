@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 
 $basePath = dirname(__DIR__);
+
 $app = Application::configure(basePath: $basePath)
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -22,12 +23,9 @@ $app = Application::configure(basePath: $basePath)
         //
     });
 
+// Cargar el .env interno
 if (file_exists($basePath.'/.env')) {
-    Dotenv::createMutable($basePath)->load();
-}
-$externalPath = $basePath.'/../.env';
-if (file_exists($externalPath)) {
-    Dotenv::createMutable(dirname($externalPath), basename($externalPath))->load();
+    Dotenv::createImmutable($basePath)->safeLoad();
 }
 
 return $app->create();
