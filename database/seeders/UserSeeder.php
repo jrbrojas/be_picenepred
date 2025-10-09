@@ -14,7 +14,6 @@ class UserSeeder extends Seeder
         User::create([
             'nombres'   => 'MARIA',
             'apellidos' => 'SANTIAGO RUIZ',
-            'usuario'   => 'msantiago',
             'email'     => 'msantiago@cenepred.gob.pe',
             'password'  => Hash::make('1234'),
             'rol'       => 'ADMIN',
@@ -26,7 +25,6 @@ class UserSeeder extends Seeder
         User::create([
             'nombres'   => 'JUAN',
             'apellidos' => 'PEREZ LOPEZ',
-            'usuario'   => 'jperez',
             'email'     => 'jperez@cenepred.gob.pe',
             'password'  => Hash::make('123456'),
             'rol'       => 'USER',

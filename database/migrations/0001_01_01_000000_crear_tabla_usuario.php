@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('nombres', 100);
             $table->string('apellidos', 150);
-            $table->string('usuario', 50)->unique(); // username personalizado
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');              // Hash::make para seguridad
