@@ -22,7 +22,7 @@ class AuthController extends Controller
             'apellidos' => 'required|string|max:150',
             'email'     => 'required|string|email|unique:users',
             'password'  => 'required|string|min:6',
-            'fuente'  => 'required|string|min:2',
+           // 'fuente'  => 'required|string|min:2',
             'rol'       => 'required|in:ADMIN,USER',
         ]);
         $data['activo'] = true;

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');              // Hash::make para seguridad
             $table->enum('rol', ['ADMIN', 'USER'])->default('USER');
-            $table->string('fuente')->nullable();
+           // $table->string('fuente')->nullable();
             $table->boolean('activo')->default(1);
             $table->rememberToken();
             $table->timestamps();
