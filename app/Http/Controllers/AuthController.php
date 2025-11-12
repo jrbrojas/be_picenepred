@@ -24,6 +24,7 @@ class AuthController extends Controller
             'password'  => 'required|string|min:6',
             'rol'       => 'required|in:ADMIN,USER',
         ]);
+        $data['rol'] = 'USER';
         $data['activo'] = true;
 
         $user = User::create($data);

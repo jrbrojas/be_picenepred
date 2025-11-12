@@ -2,33 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Escenario;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     /**
-     * Listar todos los usuarios
-     * - ADMIN y USER pueden ver la lista
+     * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(User::all(), 200);
+        $usuarios = User::search($request['query'])->orderBy('apellidos')->get();
+        // eviar los parametros de esta forma para que el datatable del front los pueda leer sin problemas
+        return response()->json([
+            'list' => $usuarios,
+            'total' => $usuarios->count(),
+        ]);
     }
 
     /**
      * Mostrar un usuario por ID
      * - ADMIN y USER pueden consultar
      */
-    public function show(int $id)
+    public function show(User $usuario)
     {
-        $user = User::find($id);
-        if (!$user) {
+        if (!$usuario) {
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
         /** @var User */
-        return response()->json($user, 200);
+        return response()->json($usuario, 200);
     }
 
     /**
@@ -37,86 +40,58 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        if (auth()->user()->rol !== 'ADMIN') {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
-
-        $request->validate([
-            'nombres'   => 'required|string|max:100',
-            'apellidos' => 'required|string|max:150',
-            'email'     => 'required|email|unique:users',
-            'password'  => 'required|string|min:6',
-            'rol'       => 'required|in:ADMIN,USER',
+        // creacion de prueba
+        $data = $request->validate([
+            'rol'      => 'required|in:ADMIN,USER',
+            'nombres' => 'required|string|max:255',
+            'apellidos' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'sometimes|string|min:5',
+            'password_confirmation' => 'sometimes|required_with:password|same:password',
         ]);
 
-        $user = User::create([
-            'nombres'   => $request->nombres,
-            'apellidos' => $request->apellidos,
-            'email'     => $request->email,
-            'password'  => Hash::make($request->password),
-            'rol'       => $request->rol,
-            'fuente'    => $request->fuente,
-            'activo'    => $request->activo ?? 1,
-        ]);
+        User::create($data);
 
-        return response()->json(['message' => 'Usuario creado correctamente', 'user' => $user], 201);
+        return response()->json([
+            'message' => 'Usuario credo exitoasamente!'
+        ]);
     }
 
     /**
-     * Actualizar usuario
-     * - Solo ADMIN puede editar
+     * Display the specified resource.
      */
-    public function update(Request $request, int $id)
+    public function update(Request $request, User $usuario)
     {
         if (auth()->user()->rol !== 'ADMIN') {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        $user = User::find($id);
-        if (!$user) {
+        if (!$usuario) {
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
-        $request->validate([
+        $data = $request->validate([
             'nombres'  => 'nullable|string|max:100',
             'apellidos'  => 'nullable|string|max:100',
-            'email'    => 'email|unique:users,email,' . $id,
-            'rol'      => 'in:ADMIN,USER',
+            'email'    => 'email|unique:users,email,' . $usuario->id,
+            'rol'      => 'required|in:ADMIN,USER',
             'password' => 'nullable|string|min:6',
             'fuente'  => 'nullable|string|max:100',
             'activo'  => 'nullable|string|max:100',
         ]);
 
-        $user->update([
-            'nombres'   => $request->nombres ?? $user->nombres,
-            'apellidos' => $request->apellidos ?? $user->apellidos,
-            'email'     => $request->email ?? $user->email,
-            'password'  => $request->password ? Hash::make($request->password) : $user->password,
-            'rol'       => $request->rol ?? $user->rol,
-            'fuente'    => $request->fuente ?? $user->fuente,
-            'activo'    => $request->activo ?? $user->activo,
-        ]);
+        $usuario->update($data);
 
         /** @var array{'message': string, user: User } */
-        return response()->json(['message' => 'Usuario actualizado correctamente', 'user' => $user], 200);
+        return response()->json(['message' => 'Usuario actualizado correctamente', 'user' => $usuario], 200);
     }
 
     /**
-     * Eliminar usuario
-     * - Solo ADMIN puede eliminar
+     * Remove the specified resource from storage.
      */
-    public function destroy(int $id)
+    public function destroy(User $usuario)
     {
-        if (auth()->user()->rol !== 'ADMIN') {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
-
-        $user = User::find($id);
-        if (!$user) {
-            return response()->json(['message' => 'Usuario no encontrado'], 404);
-        }
-
-        $user->delete();
-        return response()->json(['message' => 'Usuario eliminado correctamente'], 200);
+        $usuario->delete();
+        return response()->json(['message' => 'Usuario eliminado exitosamente']);
     }
 }

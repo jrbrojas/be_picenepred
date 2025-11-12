@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -20,7 +21,7 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'rol',
-       // 'fuente',
+        // 'fuente',
         'activo',
     ];
 
@@ -41,6 +42,13 @@ class User extends Authenticatable implements JWTSubject
         'password' => 'hashed',
     ];
 
+
+    public function scopeSearch(Builder $query, $value)
+    {
+        $query->where('nombres', 'ilike', "%{$value}%")
+            ->orWhere('apellidos', 'ilike', "%{$value}%")
+            ->orWhere('email', 'ilike', "%{$value}%");
+    }
 
     public function getJWTIdentifier()
     {
