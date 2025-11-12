@@ -15,14 +15,13 @@ class AuthController extends Controller
     /**
      * Registro de usuario
      */
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
             'nombres'   => 'required|string|max:100',
             'apellidos' => 'required|string|max:150',
             'email'     => 'required|string|email|unique:users',
             'password'  => 'required|string|min:6',
-           // 'fuente'  => 'required|string|min:2',
             'rol'       => 'required|in:ADMIN,USER',
         ]);
         $data['activo'] = true;
@@ -46,13 +45,13 @@ class AuthController extends Controller
         $user = auth('api')->user();
 
         // Verificar si el usuario está activo
-        if (!$user->activo) {
+        if (!$user || !$user->activo) {
             return response()->json(['message' => 'Usuario inactivo'], 403);
         }
 
-        // $token = $user->createToken('auth_token')->plainTextToken;
         return response()->json([
             'status'       => 'success',
+            // @var User
             'user'         => $user,
             'estado'         => $user->activo,
             'token' => $token,
@@ -66,6 +65,7 @@ class AuthController extends Controller
     {
         $user = auth('api')->user();
         return response()->json([
+            // @var User
             'user'   => $user,
             'rol'    => $user->rol,
             'activo' => $user->activo,
@@ -78,7 +78,6 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         auth('api')->logout(true);
-        // $request->user()->tokens()->delete();
 
         return response()->json(['message' => 'Sesion cerrada correctamente']);
     }

@@ -2,7 +2,13 @@
 
 namespace App\Providers;
 
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +25,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Scramble::configure()
+            ->withDocumentTransformers(function (OpenApi $openApi) {
+                $openApi->secure(
+                    SecurityScheme::http('bearer', 'JWT')
+                );
+            })
+            ->withOperationTransformers(function (Operation $operation, RouteInfo $routeInfo) {
+                $middleware = $routeInfo->route->gatherMiddleware();
+
+                if (collect($middleware)->contains(fn($m) => Str::startsWith($m, 'auth:api'))) {
+                } else {
+                    $operation->security = [];
+                }
+            });
     }
 }

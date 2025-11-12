@@ -21,12 +21,13 @@ class UserController extends Controller
      * Mostrar un usuario por ID
      * - ADMIN y USER pueden consultar
      */
-    public function show($id)
+    public function show(int $id)
     {
         $user = User::find($id);
         if (!$user) {
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
+        /** @var User */
         return response()->json($user, 200);
     }
 
@@ -65,7 +66,7 @@ class UserController extends Controller
      * Actualizar usuario
      * - Solo ADMIN puede editar
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         if (auth()->user()->rol !== 'ADMIN') {
             return response()->json(['message' => 'No autorizado'], 403);
@@ -77,9 +78,13 @@ class UserController extends Controller
         }
 
         $request->validate([
+            'nombres'  => 'nullable|string|max:100',
+            'apellidos'  => 'nullable|string|max:100',
             'email'    => 'email|unique:users,email,' . $id,
             'rol'      => 'in:ADMIN,USER',
             'password' => 'nullable|string|min:6',
+            'fuente'  => 'nullable|string|max:100',
+            'activo'  => 'nullable|string|max:100',
         ]);
 
         $user->update([
@@ -92,6 +97,7 @@ class UserController extends Controller
             'activo'    => $request->activo ?? $user->activo,
         ]);
 
+        /** @var array{'message': string, user: User } */
         return response()->json(['message' => 'Usuario actualizado correctamente', 'user' => $user], 200);
     }
 
@@ -99,7 +105,7 @@ class UserController extends Controller
      * Eliminar usuario
      * - Solo ADMIN puede eliminar
      */
-    public function destroy($id)
+    public function destroy(int $id)
     {
         if (auth()->user()->rol !== 'ADMIN') {
             return response()->json(['message' => 'No autorizado'], 403);
