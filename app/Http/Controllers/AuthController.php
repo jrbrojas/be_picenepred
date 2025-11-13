@@ -21,9 +21,10 @@ class AuthController extends Controller
             'nombres'   => 'required|string|max:100',
             'apellidos' => 'required|string|max:150',
             'email'     => 'required|string|email|unique:users',
-            'password'  => 'required|string|min:6',
-            'rol'       => 'required|in:ADMIN,USER',
+            'password' => 'required|string|min:5',
+            'password_confirmation' => 'required|required_with:password|same:password',
         ]);
+
         $data['rol'] = 'USER';
         $data['activo'] = true;
 
