@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 class UserController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Listar todos los usuarios
+     *
+     * Retorna la lista completa de usuarios registrados en el sistema.
      */
     public function index(Request $request)
     {
@@ -23,7 +25,8 @@ class UserController extends Controller
 
     /**
      * Mostrar un usuario por ID
-     * - ADMIN y USER pueden consultar
+     *
+     * Devuelve los detalles completos de un usuario específico según su identificador.
      */
     public function show(User $usuario)
     {
@@ -36,7 +39,9 @@ class UserController extends Controller
 
     /**
      * Crear usuario
-     * - Solo ADMIN puede crear
+     *
+     * Crea un nuevo usuario dentro del sistema, con la posibilidad de definir roles y permisos.
+     * (Solo ADMIN puede crear)
      */
     public function store(Request $request)
     {
@@ -58,7 +63,9 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Actualizar usuario
+     *
+     * Permite modificar la información de un usuario existente. (Solo ADMIN puede editar)
      */
     public function update(Request $request, User $usuario)
     {
@@ -87,7 +94,9 @@ class UserController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Eliminar usuario
+     *
+     * Elimina o desactiva un usuario del sistema según su ID. (Solo ADMIN puede eliminar)
      */
     public function destroy(User $usuario)
     {

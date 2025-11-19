@@ -4,16 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 
 class AuthController extends Controller
 {
-
     /**
      * Registro de usuario
+     *
+     * Permite registrar un nuevo usuario en el sistema proporcionando los datos
+     * requeridos.
+     * Retorna el usuario creado junto con un mensaje de confirmación.
      */
     public function register(Request $request): JsonResponse
     {
@@ -40,6 +41,8 @@ class AuthController extends Controller
 
     /**
      * Login de usuario
+     *
+     * Autentica a un usuario existente verificando sus credenciales.
      */
     public function login(LoginRequest $request): JsonResponse
     {
@@ -62,6 +65,9 @@ class AuthController extends Controller
 
     /**
      * Usuario autenticado (perfil)
+     *
+     * Obtiene la información del usuario autenticado actualmente, según el
+     * token enviado en el encabezado `Authorization: Bearer.`
      */
     public function me(Request $request)
     {
@@ -76,6 +82,8 @@ class AuthController extends Controller
 
     /**
      * Cerrar sesión
+     *
+     * Invalida el token actual, cerrando la sesión del usuario autenticado.
      */
     public function logout(Request $request)
     {
@@ -84,9 +92,15 @@ class AuthController extends Controller
         return response()->json(['message' => 'Sesion cerrada correctamente']);
     }
 
+    /**
+     * Refrescar el token
+     *
+     * Este token se refresca en el middleware de JWT
+     */
     public function refresh(): JsonResponse
     {
         $newToken = auth('api')->refresh();
+
         return $this->respondWithToken($newToken);
     }
 
@@ -99,6 +113,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status'       => 'success',
+            // @var User
             'user'         => $u,
             'rol'          => $u?->rol,
             'estado'       => $u?->activo,

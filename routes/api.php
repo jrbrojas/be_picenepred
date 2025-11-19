@@ -12,6 +12,8 @@ Route::prefix('v1')->group(function () {
 
     // Rutas protegidas con Sanctum
     Route::middleware(['auth:api'])->group(function () {
+        Route::post('/refresh', [AuthController::class, 'refresh'])->name('refresh');
+
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
 
