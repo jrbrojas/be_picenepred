@@ -12,6 +12,51 @@ function j(mixed $data, string $separator = ', '): string
     <title>{{ $apiSpec['info']['title'] ?? 'Documentación de API' }}</title>
 
     <style>
+        @page {
+            margin: 100px 40px 70px 40px; /* top, right, bottom, left */
+        }
+            header {
+                position: fixed;
+                top: -60px;
+                left: 0px;
+                right: 0px;
+                height: 60px;
+
+                /** Extra personal styles **/
+                color: black;
+                text-align: center;
+                line-height: 35px;
+
+                border-bottom: 1px solid #aaa;
+            }
+
+            footer {
+                position: fixed; 
+                bottom: -60px; 
+                left: 0px; 
+                right: 0px;
+                height: 50px; 
+
+                /** Extra personal styles **/
+                color: black;
+                text-align: center;
+                line-height: 35px;
+
+                border-top: 1px solid #aaa;
+            }
+        .json-example {
+    background: #1e1e1e;
+    color: #dcdcdc;
+    border: 1px solid #333;
+    padding: 14px 18px;
+    border-radius: 4px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin-top: 10px;
+}
+
         body {
             font-family: DejaVu Sans, sans-serif;
             font-size: 12px;
@@ -65,10 +110,49 @@ function j(mixed $data, string $separator = ', '): string
         .level-2 { padding-left: 30px; }
         .level-3 { padding-left: 45px; }
         .level-4 { padding-left: 60px; }
+.header-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+}
+
+.header-table td {
+    border: none !important;
+    padding: 0;
+}
+
+.header-logo {
+    width: 120px; /* Ajusta según tu logo */
+    vertical-align: bottom;
+}
+
+.logo-img {
+    width: 100px; /* Ajusta tamaño del logo */
+    height: auto;
+    display: block;
+}
+
+.header-text {
+    text-align: right;
+    font-size: 12px;
+    padding-left: 10px;
+}
     </style>
 </head>
 <body>
 
+        <header>
+            <table class="header-table">
+                <tr>
+                    <td class="header-logo"><img src="data:image/png;base64,{{ $logoBase64 }}" alt="Logo" class="logo-img"/></td>
+                    <td class="header-text">ROFAI BUSINESS S.A.C. | Plataforma Tecnológica Integrada – CENEPRED</td>
+                </tr>
+            </table>
+        </header>
+
+        <footer>
+            <div>ROFAI BUSINESS S.A.C. – PTI CENEPRED</div>
+        </footer>
 @php
     if (!function_exists('resolveSchema')) {
         function resolveSchema(array $schema, array $apiSpec)
@@ -124,14 +208,152 @@ function j(mixed $data, string $separator = ', '): string
             return $type;
         }
     }
+if (!function_exists('generateExampleFromSchema')) {
+    /**
+     * Genera un ejemplo (PHP array) recursivamente a partir de un schema OpenAPI.
+     *
+     * @param array $schema
+     * @param array $apiSpec
+     * @param int $depth Profundidad de recursión (para evitar loops)
+     * @param array $inheritedRequired campos requeridos heredados (si aplica)
+     * @return mixed
+     */
+    function generateExampleFromSchema(array $schema, array $apiSpec, int $depth = 0, array $inheritedRequired = [])
+    {
+        // Evitar recursión infinita
+        $maxDepth = 6;
+        if ($depth > $maxDepth) {
+            return null;
+        }
 
+        $schema = resolveSchema($schema, $apiSpec);
+
+        // Arrays
+        if (($schema['type'] ?? null) === 'array' && isset($schema['items'])) {
+            $itemExample = generateExampleFromSchema($schema['items'], $apiSpec, $depth + 1, $schema['required'] ?? []);
+            return [$itemExample];
+        }
+
+        // Si es un object con properties -> generar objeto completo
+        if (($schema['type'] ?? null) === 'object' && isset($schema['properties']) && is_array($schema['properties'])) {
+            $result = [];
+            $required = $schema['required'] ?? $inheritedRequired;
+
+            foreach ($schema['properties'] as $propName => $propSchema) {
+                $resolved = resolveSchema($propSchema, $apiSpec);
+                // si el campo tiene ejemplo explícito, usarlo; si no, recurrir a generatePropertyExample que delega a generateExampleFromSchema cuando sea necesario
+                $result[$propName] = generatePropertyExample($resolved, $apiSpec, $depth + 1);
+            }
+
+            return $result;
+        }
+
+        // Si no tiene properties (primitivo, enum, etc.), delegar
+        return generatePropertyExample($schema, $apiSpec, $depth);
+    }
+}
+
+if (!function_exists('generatePropertyExample')) {
+    /**
+     * Genera ejemplo para una sola propiedad (puede delegar a generateExampleFromSchema si es objeto/array).
+     *
+     * @param array $schema
+     * @param array $apiSpec
+     * @param int $depth
+     * @return mixed
+     */
+    function generatePropertyExample(array $schema, array $apiSpec = [], int $depth = 0)
+    {
+        // Resuelve referencias por si acaso
+        $schema = resolveSchema($schema, $apiSpec);
+
+        // 1) Si tiene example → usar directamente
+        if (isset($schema['example'])) {
+            return $schema['example'];
+        }
+
+        // 2) Si es enum → tomar el primer valor
+        if (isset($schema['enum']) && is_array($schema['enum']) && count($schema['enum']) > 0) {
+            return $schema['enum'][0];
+        }
+
+        // 3) Si viene con ejemplo por ejemplo de x-example u otros campos (opcional)
+        if (isset($schema['x-example'])) {
+            return $schema['x-example'];
+        }
+
+        $type = $schema['type'] ?? null;
+        $format = $schema['format'] ?? null;
+
+        // Si no hay tipo pero tiene properties -> tratar como object
+        if ($type === null && isset($schema['properties'])) {
+            $type = 'object';
+        }
+        switch ($type) {
+            case 'string':
+                // Diferenciar formatos comunes
+                $format = $schema['format'] ?? null;
+                if ($format === 'date-time' || $format === 'date') {
+                    // usar formato ISO
+                    return date($format === 'date-time' ? 'c' : 'Y-m-d');
+                }
+                if ($format === 'uuid') {
+                    return '00000000-0000-0000-0000-000000000000';
+                }
+                return $schema['default'] ?? 'string';
+
+            case 'integer':
+                return $schema['default'] ?? 0;
+
+            case 'number':
+                return $schema['default'] ?? 0.0;
+
+            case 'boolean':
+                return $schema['default'] ?? true;
+
+            case 'array':
+                if (isset($schema['items'])) {
+                    // si items es objeto -> delegar para generar contenido del array
+                    $itemExample = generatePropertyExample($schema['items'], $apiSpec, $depth + 1);
+                    return [$itemExample];
+                }
+                return [];
+
+            case 'object':
+                // Si tiene properties -> generar recursivamente
+                if (isset($schema['properties']) && is_array($schema['properties'])) {
+                    $res = [];
+                    foreach ($schema['properties'] as $pname => $pschema) {
+                        $res[$pname] = generatePropertyExample(resolveSchema($pschema, $apiSpec), $apiSpec, $depth + 1);
+                    }
+                    return $res;
+                }
+                return (object)[]; // o [] según prefieras
+
+            default:
+                // fallback: intentar inferir a partir de "properties" o "items"
+                if (isset($schema['properties'])) {
+                    return generateExampleFromSchema($schema, $apiSpec, $depth + 1);
+                }
+                if (isset($schema['items'])) {
+                    return [ generatePropertyExample($schema['items'], $apiSpec, $depth + 1) ];
+                }
+
+                return $schema['default'] ?? 'example';
+        }
+    }
+}
     if (!function_exists('printSchemaProperties')) {
         function printSchemaProperties(array $schema, array $apiSpec, int $level = 0, array $inheritedRequired = [])
         {
             $schema = resolveSchema($schema, $apiSpec);
 
             if (($schema['type'] ?? null) === 'array' && isset($schema['items'])) {
-                printSchemaProperties($schema['items'], $apiSpec, $level, $schema['required'] ?? $inheritedRequired);
+                $newSchema = $schema['items'];
+                if (!is_array($newSchema)) {
+                    $newSchema = (array) $newSchema;;
+                }
+                printSchemaProperties($newSchema, $apiSpec, $level, $schema['required'] ?? $inheritedRequired);
                 return;
             }
 
@@ -162,7 +384,7 @@ function j(mixed $data, string $separator = ', '): string
                      '</td>';
                 echo '<td>' . e(j($label)) . '</td>';
                 echo '<td>' . $isReq . '</td>';
-                echo '<td>' . e($desc) . '</td>';
+                //echo '<td>' . e($desc) . '</td>';
                 echo '</tr>';
 
                 if (
@@ -260,9 +482,9 @@ function j(mixed $data, string $separator = ', '): string
 
     <!-- Portada -->
     <div class="section">
-        <h1>{{ $apiSpec['info']['title'] }}</h1>
+        <h1>{!! $apiSpec['info']['title'] !!}</h1>
         <p><strong>Versión:</strong> {{ $apiSpec['info']['version'] }}</p>
-        <p><strong>Descripción:</strong> {{ $apiSpec['info']['description'] ?? '-' }}</p>
+        <p style="text-align: justify;"><strong>Descripción:</strong> {!! $apiSpec['info']['description'] ?? '-' !!}</p>
     </div>
 
     <div class="page-break"></div>
@@ -327,20 +549,17 @@ function j(mixed $data, string $separator = ', '): string
         <h2>Endpoints</h2>
 
         @foreach($apiSpec['paths'] as $path => $methods)
-            <h3>{{ $path }}</h3>
-
             @foreach($methods as $httpMethod => $operation)
                 <div class="sub-section">
-                    <h4>{{ strtoupper($httpMethod) }}</h4>
-
                     @if(isset($operation['summary']))
-                        <p><strong>Resumen:</strong> {{ $operation['summary'] }}</p>
+                        <h1>{{ $operation['summary'] }}</h1>
                     @endif
+                    <p><strong>URL:</strong> <code>/api{{ $path }}</code></p>
+                    <p><strong>Método HTTP:</strong> <code>{{ strtoupper($httpMethod) }}</code></p>
                     @if(isset($operation['description']))
                         <p><strong>Descripción:</strong> {!! nl2br(e($operation['description'])) !!}</p>
                     @endif
 
-                    <p><strong>URL:</strong> <code>{{ $path }}</code></p>
 
                     {{-- HEADERS ESPECÍFICOS DEL ENDPOINT --}}
                     @php
@@ -348,13 +567,13 @@ function j(mixed $data, string $separator = ', '): string
                     @endphp
 
                     @if(count($endpointHeaders))
-                        <h5>Headers</h5>
+                        <h4>Headers</h4>
                         <table>
                             <thead>
                                 <tr>
                                     <th>Header</th>
                                     <th>Tipo</th>
-                                    <th>Req.</th>
+                                    <th>Requerido</th>
                                     <th>Descripción</th>
                                 </tr>
                             </thead>
@@ -381,6 +600,7 @@ function j(mixed $data, string $separator = ', '): string
                         @endphp
 
                         @if($bodySchema)
+                            <h4>Request</h4>
                             <h5>
                                 Body
                                 @if($contentTypes)
@@ -393,20 +613,21 @@ function j(mixed $data, string $separator = ', '): string
                                     <tr>
                                         <th>Propiedad</th>
                                         <th>Tipo</th>
-                                        <th>Req.</th>
-                                        <th>Descripción</th>
+                                        <th>Requerido</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @php printSchemaProperties($bodySchema, $apiSpec); @endphp
                                 </tbody>
                             </table>
+                            <h4>Ejemplo</h4>
+                            <pre class="json-example">{{ json_encode(generateExampleFromSchema($bodySchema, $apiSpec), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                         @endif
                     @endif
 
                     {{-- RESPONSES EN FORMATO ÁRBOL --}}
                     @if(isset($operation['responses']))
-                        <h5>Responses</h5>
+                        <h4>Responses</h4>
 
                         @foreach($operation['responses'] as $code => $resp)
                             @php
@@ -433,8 +654,7 @@ function j(mixed $data, string $separator = ', '): string
                                                 <tr>
                                                     <th>Propiedad</th>
                                                     <th>Tipo</th>
-                                                    <th>Req.</th>
-                                                    <th>Descripción</th>
+                                                    <th>Requerido</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -444,6 +664,11 @@ function j(mixed $data, string $separator = ', '): string
                                                 @endphp
                                             </tbody>
                                         </table>
+                                        <h4>Ejemplo</h4>
+                                        <pre class="json-example">{{ json_encode(
+                                            generateExampleFromSchema($respSchema, $apiSpec),
+                                            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
+                                        ) }}</pre>
                                     @endif
                                 @endforeach
                             @endif
@@ -456,7 +681,6 @@ function j(mixed $data, string $separator = ', '): string
             @endforeach
         @endforeach
     </div>
-
 </body>
 </html>
 
