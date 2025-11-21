@@ -26,7 +26,7 @@ class AuthController extends Controller
             'password_confirmation' => 'required|required_with:password|same:password',
         ]);
 
-        $data['rol'] = 'USER';
+        $data['rol'] = 'USUARIO';
         $data['activo'] = true;
 
         $user = User::create($data);

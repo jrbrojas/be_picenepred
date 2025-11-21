@@ -47,10 +47,11 @@ class UserController extends Controller
     {
         // creacion de prueba
         $data = $request->validate([
-            'rol'      => 'required|in:ADMIN,USER',
+            'rol'      => 'required|in:ADMIN,USUARIO',
             'nombres' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'rol'      => 'required|exists:roles,name',
             'password' => 'sometimes|string|min:5',
             'password_confirmation' => 'sometimes|required_with:password|same:password',
         ]);
@@ -81,11 +82,13 @@ class UserController extends Controller
             'nombres'  => 'nullable|string|max:100',
             'apellidos'  => 'nullable|string|max:100',
             'email'    => 'email|unique:users,email,' . $usuario->id,
-            'rol'      => 'required|in:ADMIN,USER',
-            'password' => 'nullable|string|min:6',
-            'fuente'  => 'nullable|string|max:100',
-            'activo'  => 'nullable|string|max:100',
+            'rol'      => 'required|exists:roles,name',
+            'password' => 'sometimes|nullable|string|min:5',
         ]);
+
+        if (empty($data['password'])) {
+            unset($data['password']);
+        }
 
         $usuario->update($data);
 

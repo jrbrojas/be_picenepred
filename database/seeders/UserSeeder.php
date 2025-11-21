@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
             'apellidos' => 'PEREZ LOPEZ',
             'email'     => 'jperez@cenepred.gob.pe',
             'password'  => '123456',
-            'rol'       => 'USER',
+            'rol'       => 'USUARIO',
           //  'fuente'    => 'SIGRID',
             'activo'    => 1,
         ]);
@@ -38,6 +38,16 @@ class UserSeeder extends Seeder
             'email'     => 'admin@cenepred.gob.pe',
             'password'  => '$Cenepred2025$',
             'rol'       => 'ADMIN',
+          //  'fuente'    => 'SIGRID',
+            'activo'    => 1,
+        ]);
+
+        User::create([
+            'nombres'   => 'Usuario',
+            'apellidos' => 'Secundario',
+            'email'     => 'usuario@cenepred.gob.pe',
+            'password'  => '$Cenepred2025$',
+            'rol'       => 'USUARIO',
           //  'fuente'    => 'SIGRID',
             'activo'    => 1,
         ]);
