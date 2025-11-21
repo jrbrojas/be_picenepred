@@ -31,11 +31,11 @@ function j(mixed $data, string $separator = ', '): string
             }
 
             footer {
-                position: fixed; 
-                bottom: -60px; 
-                left: 0px; 
+                position: fixed;
+                bottom: -60px;
+                left: 0px;
                 right: 0px;
-                height: 50px; 
+                height: 50px;
 
                 /** Extra personal styles **/
                 color: black;
@@ -482,9 +482,9 @@ if (!function_exists('generatePropertyExample')) {
 
     <!-- Portada -->
     <div class="section">
-        <h1>{!! $apiSpec['info']['title'] !!}</h1>
+        <h1>{!! nl2br(e($apiSpec['info']['title'])) !!}</h1>
         <p><strong>Versión:</strong> {{ $apiSpec['info']['version'] }}</p>
-        <p style="text-align: justify;"><strong>Descripción:</strong> {!! $apiSpec['info']['description'] ?? '-' !!}</p>
+        <p style="text-align: justify;"><strong>Descripción:</strong> {!! nl2br(e($apiSpec['info']['description'])) ?? '-' !!}</p>
     </div>
 
     <div class="page-break"></div>
